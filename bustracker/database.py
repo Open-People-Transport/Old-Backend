@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine
 
 from . import models
 from .settings import POSTGRES_URL
@@ -10,3 +10,8 @@ def create_db_tables():
     # All the models have to be imported before creation
     assert models  # nosec
     SQLModel.metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
