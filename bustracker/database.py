@@ -1,14 +1,14 @@
 from sqlmodel import Session, SQLModel, create_engine
 
-from . import models
 from .settings import get_settings
 
 engine = create_engine(get_settings().postgres_url, echo=True)
 
 
 def create_db_tables():
-    # All the models have to be imported before creation
-    assert models  # nosec
+    # Ensure that all models are registered before creating tables
+    from . import models  # pylint: disable=unused-import, import-outside-toplevel
+
     SQLModel.metadata.create_all(engine)
 
 

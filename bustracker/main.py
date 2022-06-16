@@ -14,7 +14,8 @@ def on_startup():
 
 @app.get("/", response_model=list[models.City])
 def read_cities(session: Session = Depends(get_session)):
-    cities = session.exec(select(models.City)).all()
+    query = select(models.City)
+    cities = session.exec(query).all()
     return cities
 
 
