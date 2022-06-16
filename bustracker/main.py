@@ -2,14 +2,9 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlmodel import Session, select
 
 from . import models
-from .database import create_db_tables, get_session
+from .database import get_session
 
 app = FastAPI()
-
-
-@app.on_event("startup")
-def on_startup():
-    create_db_tables()
 
 
 @app.get("/", response_model=list[models.City])
