@@ -1,9 +1,9 @@
 from sqlmodel import Session, SQLModel, create_engine
 
 from . import models
-from .settings import POSTGRES_URL
+from .settings import get_settings
 
-engine = create_engine(POSTGRES_URL, echo=True)
+engine = create_engine(get_settings().postgres_url, echo=True)
 
 
 def create_db_tables():
