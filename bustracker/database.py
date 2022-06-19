@@ -2,7 +2,7 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from .settings import get_settings
 
-engine = create_engine(get_settings().postgres_url, echo=True)
+engine = create_engine(get_settings().postgres_url)
 
 
 def init_models():
