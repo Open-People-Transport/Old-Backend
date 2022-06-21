@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 from geoalchemy2 import Geography
 from sqlmodel import Column, Field, Relationship
+from tomlkit import table
 
 from .database import BaseModel
 
@@ -34,6 +35,7 @@ class Route(BaseModel, table=True):
     number: str = Field(max_length=6, schema_extra=example("1"))
     type_name: str = Field(foreign_key=Type.name)
     type: Type = Relationship()
+    route_stops: list["RouteStop"] = Relationship(back_populates="route")
 
 
 class Node(BaseModel, table=True):
@@ -62,3 +64,20 @@ class Stop(BaseModel, table=True):
     )
     node_id: UUID = Field(foreign_key=Node.id)
     node: Node = Relationship(back_populates="stops")
+    route_stops: list["RouteStop"] = Relationship(back_populates="stop")
+
+
+class RouteStop(BaseModel, table=True):
+    """
+    A link between a route and a stop.
+    """
+
+    route_id: UUID = Field(primary_key=True, foreign_key=Route.id)
+    route: Route = Relationship(back_populates="route_stops")
+    stop_id: UUID = Field(primary_key=True, foreign_key=Stop.id)
+    stop: Stop = Relationship(back_populates="route_stops")
+    distance: int = Field(
+        primary_key=True,
+        schema_extra=example("100"),
+        description="Distance in meters from the start of the route to this stop",
+    )
