@@ -2,7 +2,7 @@
 
 from sqladmin import ModelAdmin
 
-from .models import Node, Route, Type
+from .models import Node, Route, Stop, Type
 
 
 class TypeAdmin(ModelAdmin, model=Type):
@@ -15,3 +15,7 @@ class RouteAdmin(ModelAdmin, model=Route):
 
 class NodeAdmin(ModelAdmin, model=Node):
     column_list = [Node.id, Node.name]
+
+
+class StopAdmin(ModelAdmin, model=Stop):
+    column_list = [Stop.id, Stop.node_id, Stop.location]

@@ -1,7 +1,8 @@
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlmodel import Field, Relationship
+from geoalchemy2 import Geography
+from sqlmodel import Column, Field, Relationship
 
 from .database import BaseModel
 
@@ -43,3 +44,21 @@ class Node(BaseModel, table=True):
 
     id: UUID = Field(primary_key=True, nullable=False, default_factory=uuid4)
     name: str = Field(max_length=32, schema_extra=example("Example St."))
+    stops: list["Stop"] = Relationship(back_populates="node")
+
+
+class Stop(BaseModel, table=True):
+    """
+    A single physical transport stop, which one or multiple routes can stop at.
+    """
+
+    id: UUID = Field(primary_key=True, nullable=False, default_factory=uuid4)
+    location: Any = Field(
+        sa_column=Column(
+            Geography("POINT", srid=4326, spatial_index=False),
+            nullable=False,
+            unique=True,
+        )
+    )
+    node_id: UUID = Field(foreign_key=Node.id)
+    node: Node = Relationship(back_populates="stops")
