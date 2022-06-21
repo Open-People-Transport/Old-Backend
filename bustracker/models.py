@@ -22,6 +22,7 @@ class Type(BaseModel, table=True):
         max_length=12,
         schema_extra=example("bus"),
     )
+    routes: list["Route"] = Relationship(back_populates="type")
 
 
 class Route(BaseModel, table=True):
@@ -33,7 +34,7 @@ class Route(BaseModel, table=True):
     id: UUID = Field(primary_key=True, nullable=False, default_factory=uuid4)
     number: str = Field(max_length=6, schema_extra=example("1"))
     type_name: str = Field(foreign_key=Type.name)
-    type: Type = Relationship()
+    type: Type = Relationship(back_populates="routes")
     route_stops: list["RouteStop"] = Relationship(back_populates="route")
 
 
