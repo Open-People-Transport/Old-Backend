@@ -1,3 +1,5 @@
+from inflection import underscore
+from sqlalchemy.orm import declared_attr
 from sqlmodel import Session, SQLModel, create_engine
 
 from .settings import get_settings
@@ -13,3 +15,9 @@ def init_models():
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+class BaseModel(SQLModel):
+    @declared_attr
+    def __tablename__(cls) -> str:  # type: ignore
+        return underscore(cls.__name__)
