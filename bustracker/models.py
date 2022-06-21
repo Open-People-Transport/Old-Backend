@@ -33,3 +33,13 @@ class Route(BaseModel, table=True):
     number: str = Field(max_length=6, schema_extra=example("1"))
     type_name: str = Field(foreign_key=Type.name)
     type: Type = Relationship()
+
+
+class Node(BaseModel, table=True):
+    """
+    A bunch of stops located closely together,
+    with passengers able to change between them easily.
+    """
+
+    id: UUID = Field(primary_key=True, nullable=False, default_factory=uuid4)
+    name: str = Field(max_length=32, schema_extra=example("Example St."))
