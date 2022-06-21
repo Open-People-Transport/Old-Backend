@@ -3,7 +3,6 @@ from uuid import UUID, uuid4
 
 from geoalchemy2 import Geography
 from sqlmodel import Column, Field, Relationship
-from tomlkit import table
 
 from .database import BaseModel
 
