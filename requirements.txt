@@ -8,3 +8,4 @@ inflection==0.5.1
 sqladmin==0.1.10
 GeoAlchemy2==0.12.1
 strawberry-graphql==0.114.3
+Shapely==1.8.2
