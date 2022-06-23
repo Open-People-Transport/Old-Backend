@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 import geoalchemy2.shape
@@ -11,7 +11,8 @@ from bustracker.models import Route as RouteModel
 from bustracker.models import RouteStop as RouteStopModel
 from bustracker.models import Stop as StopModel
 from bustracker.models import Type as TypeModel
-from sqlmodel import select
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import desc, select
 from strawberry import Private, Schema
 from strawberry.types import Info
 
@@ -109,6 +110,12 @@ class Stop:
         )
 
 
+@strawberry.input
+class StopInput:
+    lat: float
+    lng: float
+
+
 @strawberry.type
 class RouteStop:
     distance: int
@@ -164,4 +171,104 @@ class Query:
         return list(map(RouteStop.from_model, values))
 
 
-schema = Schema(Query)
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    def add_type(self, name: str, info: Info[Context, Any]) -> Type:
+        model = TypeModel(name=name)
+        info.context.session.add(model)
+        try:
+            info.context.session.commit()
+        except IntegrityError:
+            raise RuntimeError("Type with this name already exists")
+        return Type.from_model(model)
+
+    @strawberry.mutation
+    def add_route(
+        self,
+        number: str,
+        type_name: str,
+        stops: Optional[list[UUID]],
+        info: Info[Context, Any],
+    ) -> Route:
+        model = RouteModel(number=number, type_name=type_name)
+        info.context.session.add(model)
+        if stops:
+            for i, stop_id in enumerate(stops):
+                route_stop = RouteStopModel(
+                    distance=i * 100, route_id=model.id, stop_id=stop_id
+                )
+                info.context.session.add(route_stop)
+        try:
+            info.context.session.commit()
+        except IntegrityError:
+            raise RuntimeError("Invalid or conflicting mutation arguments")
+        info.context.session.refresh(model)
+        return Route.from_model(model)
+
+    @strawberry.mutation
+    def add_node(
+        self,
+        info: Info[Context, Any],
+        name: str,
+        stops: Optional[list[StopInput]] = None,
+    ) -> Node:
+        model = NodeModel(name=name)
+        info.context.session.add(model)
+        if stops:
+            for stop in stops:
+                point = shapely.geometry.point.Point(stop.lng, stop.lat)
+                location = geoalchemy2.shape.from_shape(point)
+                stop_model = StopModel(location=location, node_id=model.id)
+                info.context.session.add(stop_model)
+        try:
+            info.context.session.commit()
+        except IntegrityError:
+            raise RuntimeError("Invalid or conflicting mutation arguments")
+        info.context.session.refresh(model)
+        return Node.from_model(model)
+
+    @strawberry.mutation
+    def add_stop(
+        self,
+        info: Info[Context, Any],
+        node_id: UUID,
+        lat: float,
+        lng: float,
+    ) -> Stop:
+        point = shapely.geometry.point.Point(lng, lat)
+        location = geoalchemy2.shape.from_shape(point)
+        model = StopModel(location=location, node_id=node_id)
+        info.context.session.add(model)
+        try:
+            info.context.session.commit()
+        except IntegrityError:
+            raise RuntimeError("Invalid or conflicting mutation arguments")
+        info.context.session.refresh(model)
+        return Stop.from_model(model)
+
+    @strawberry.mutation
+    def add_route_stop(
+        self,
+        info: Info[Context, Any],
+        route_id: UUID,
+        stop_id: UUID,
+    ) -> RouteStop:
+        statement = (
+            select(RouteStopModel)
+            .where(RouteStopModel.route_id == route_id)
+            .order_by(desc(RouteStopModel.distance))
+        )
+        last_stop = info.context.session.exec(statement).first()
+        distance = last_stop.distance + 100 if last_stop else 0
+        model = RouteStopModel(route_id=route_id, stop_id=stop_id, distance=distance)
+        info.context.session.add(model)
+        try:
+            info.context.session.commit()
+        except IntegrityError:
+            raise RuntimeError("Invalid or conflicting mutation arguments")
+        info.context.session.refresh(model)
+        return RouteStop.from_model(model)
+
+
+schema = Schema(Query, Mutation)
