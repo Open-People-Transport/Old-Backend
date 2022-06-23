@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, TypeAlias
 from uuid import UUID
 
 import geoalchemy2.shape
 import shapely.geometry.point
 import strawberry
+import strawberry.types
 from bustracker.models import Node as NodeModel
 from bustracker.models import Route as RouteModel
 from bustracker.models import RouteStop as RouteStopModel
@@ -14,9 +15,10 @@ from bustracker.models import Type as TypeModel
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import desc, select
 from strawberry import Private, Schema
-from strawberry.types import Info
 
 from .context import Context
+
+Info: TypeAlias = strawberry.types.Info[Context, Any]
 
 
 @strawberry.type
@@ -141,31 +143,31 @@ class RouteStop:
 @strawberry.type
 class Query:
     @strawberry.field
-    def types(self, info: Info[Context, Any]) -> list[Type]:
+    def types(self, info: Info) -> list[Type]:
         statement = select(TypeModel)
         values = info.context.session.exec(statement).all()
         return list(map(Type.from_model, values))
 
     @strawberry.field
-    def routes(self, info: Info[Context, Any]) -> list[Route]:
+    def routes(self, info: Info) -> list[Route]:
         statement = select(RouteModel)
         values = info.context.session.exec(statement).all()
         return list(map(Route.from_model, values))
 
     @strawberry.field
-    def nodes(self, info: Info[Context, Any]) -> list[Node]:
+    def nodes(self, info: Info) -> list[Node]:
         statement = select(NodeModel)
         values = info.context.session.exec(statement).all()
         return list(map(Node.from_model, values))
 
     @strawberry.field
-    def stops(self, info: Info[Context, Any]) -> list[Stop]:
+    def stops(self, info: Info) -> list[Stop]:
         statement = select(StopModel)
         values = info.context.session.exec(statement).all()
         return list(map(Stop.from_model, values))
 
     @strawberry.field
-    def route_stops(self, info: Info[Context, Any]) -> list[RouteStop]:
+    def route_stops(self, info: Info) -> list[RouteStop]:
         statement = select(RouteStopModel)
         values = info.context.session.exec(statement).all()
         return list(map(RouteStop.from_model, values))
@@ -174,7 +176,7 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    def add_type(self, name: str, info: Info[Context, Any]) -> Type:
+    def add_type(self, info: Info, name: str) -> Type:
         model = TypeModel(name=name)
         info.context.session.add(model)
         try:
@@ -186,10 +188,10 @@ class Mutation:
     @strawberry.mutation
     def add_route(
         self,
+        info: Info,
         number: str,
         type_name: str,
-        stops: Optional[list[UUID]],
-        info: Info[Context, Any],
+        stops: Optional[list[UUID]] = None,
     ) -> Route:
         model = RouteModel(number=number, type_name=type_name)
         info.context.session.add(model)
@@ -209,7 +211,7 @@ class Mutation:
     @strawberry.mutation
     def add_node(
         self,
-        info: Info[Context, Any],
+        info: Info,
         name: str,
         stops: Optional[list[StopInput]] = None,
     ) -> Node:
@@ -231,7 +233,7 @@ class Mutation:
     @strawberry.mutation
     def add_stop(
         self,
-        info: Info[Context, Any],
+        info: Info,
         node_id: UUID,
         lat: float,
         lng: float,
@@ -250,7 +252,7 @@ class Mutation:
     @strawberry.mutation
     def add_route_stop(
         self,
-        info: Info[Context, Any],
+        info: Info,
         route_id: UUID,
         stop_id: UUID,
     ) -> RouteStop:
