@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+import geoalchemy2.shape
+import shapely.geometry.point
 import strawberry
 from bustracker.models import Node as NodeModel
 from bustracker.models import Route as RouteModel
@@ -81,7 +83,8 @@ class Node:
 @strawberry.type
 class Stop:
     id: UUID
-    # TODO Add location field
+    lat: float
+    lng: float
 
     model: Private[StopModel]
 
@@ -95,9 +98,14 @@ class Stop:
 
     @classmethod
     def from_model(cls, model: StopModel):
+        shape = geoalchemy2.shape.to_shape(model.location)
+        if not isinstance(shape, shapely.geometry.point.Point):
+            raise RuntimeError("Could not parse a Point from WKB")
         return cls(
             model=model,
             id=model.id,
+            lat=shape.x,
+            lng=shape.y,
         )
 
 

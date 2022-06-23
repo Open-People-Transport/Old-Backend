@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID, uuid4
 
-from geoalchemy2 import Geography
+from geoalchemy2 import Geography, WKBElement
 from sqlmodel import Column, Field, Relationship
 
 from .database import BaseModel
@@ -55,7 +55,7 @@ class Stop(BaseModel, table=True):
     """
 
     id: UUID = Field(primary_key=True, nullable=False, default_factory=uuid4)
-    location: Any = Field(
+    location: WKBElement = Field(
         sa_column=Column(
             Geography("POINT", srid=4326, spatial_index=False),
             nullable=False,
@@ -65,6 +65,9 @@ class Stop(BaseModel, table=True):
     node_id: UUID = Field(foreign_key=Node.id)
     node: Node = Relationship(back_populates="stops")
     route_stops: list["RouteStop"] = Relationship(back_populates="stop")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class RouteStop(BaseModel, table=True):
