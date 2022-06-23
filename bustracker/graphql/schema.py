@@ -272,5 +272,17 @@ class Mutation:
         info.context.session.refresh(model)
         return RouteStop.from_model(model)
 
+    @strawberry.mutation
+    def delete_unique(self, info: Info, uuid: UUID) -> None:
+        for ModelType in (RouteModel, NodeModel, StopModel):
+            if model := info.context.session.get(ModelType, uuid):
+                info.context.session.delete(model)
+                try:
+                    info.context.session.commit()
+                except IntegrityError:
+                    raise RuntimeError("Found, but could not delete the unit")
+                return
+        raise RuntimeError("Unique unit not found")
+
 
 schema = Schema(Query, Mutation)
