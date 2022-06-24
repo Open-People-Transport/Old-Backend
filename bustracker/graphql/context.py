@@ -1,6 +1,6 @@
 from bustracker.database import get_session
 from fastapi import Depends
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 from strawberry.fastapi import BaseContext
 
 

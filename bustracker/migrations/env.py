@@ -1,9 +1,8 @@
 from logging.config import fileConfig
 
 from alembic import context
-from bustracker.database import engine, init_models
+from bustracker.database import BaseModel, engine, init_models
 from bustracker.settings import get_settings
-from sqlmodel import SQLModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,7 +14,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 init_models()
-target_metadata = SQLModel.metadata
+target_metadata = BaseModel.metadata
 
 
 def include_name(name, type_, parent_names):

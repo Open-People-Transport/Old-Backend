@@ -7,13 +7,9 @@ import geoalchemy2.shape
 import shapely.geometry.point
 import strawberry
 import strawberry.types
-from bustracker.models import Node as NodeModel
-from bustracker.models import Route as RouteModel
-from bustracker.models import RouteStop as RouteStopModel
-from bustracker.models import Stop as StopModel
-from bustracker.models import Type as TypeModel
+from bustracker.database import models
+from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import desc, select
 from strawberry import Private, Schema
 
 from .context import Context
@@ -25,14 +21,14 @@ Info: TypeAlias = strawberry.types.Info[Context, Any]
 class Type:
     name: str
 
-    model: Private[TypeModel]
+    model: Private[models.Type]
 
     @strawberry.field
     def routes(self) -> list[Route]:
         return list(map(Route.from_model, self.model.routes))
 
     @classmethod
-    def from_model(cls, model: TypeModel):
+    def from_model(cls, model: models.Type):
         return cls(
             model=model,
             name=model.name,
@@ -44,7 +40,7 @@ class Route:
     id: UUID
     number: str
 
-    model: Private[RouteModel]
+    model: Private[models.Route]
 
     @strawberry.field
     def type(self) -> Type:
@@ -55,7 +51,7 @@ class Route:
         return list(map(RouteStop.from_model, self.model.route_stops))
 
     @classmethod
-    def from_model(cls, model: RouteModel):
+    def from_model(cls, model: models.Route):
         return cls(
             model=model,
             id=model.id,
@@ -68,14 +64,14 @@ class Node:
     id: UUID
     name: str
 
-    model: Private[NodeModel]
+    model: Private[models.Node]
 
     @strawberry.field
     def stops(self) -> list[Stop]:
         return list(map(Stop.from_model, self.model.stops))
 
     @classmethod
-    def from_model(cls, model: NodeModel):
+    def from_model(cls, model: models.Node):
         return cls(
             model=model,
             id=model.id,
@@ -89,7 +85,7 @@ class Stop:
     lat: float
     lng: float
 
-    model: Private[StopModel]
+    model: Private[models.Stop]
 
     @strawberry.field
     def node(self) -> Node:
@@ -100,7 +96,7 @@ class Stop:
         return list(map(RouteStop.from_model, self.model.route_stops))
 
     @classmethod
-    def from_model(cls, model: StopModel):
+    def from_model(cls, model: models.Stop):
         shape = geoalchemy2.shape.to_shape(model.location)
         if not isinstance(shape, shapely.geometry.point.Point):
             raise RuntimeError("Could not parse a Point from WKB")
@@ -122,7 +118,7 @@ class StopInput:
 class RouteStop:
     distance: int
 
-    model: Private[RouteStopModel]
+    model: Private[models.RouteStop]
 
     @strawberry.field
     def route(self) -> Route:
@@ -133,7 +129,7 @@ class RouteStop:
         return Stop.from_model(self.model.stop)
 
     @classmethod
-    def from_model(cls, model: RouteStopModel):
+    def from_model(cls, model: models.RouteStop):
         return cls(
             model=model,
             distance=model.distance,
@@ -144,32 +140,32 @@ class RouteStop:
 class Query:
     @strawberry.field
     def types(self, info: Info) -> list[Type]:
-        statement = select(TypeModel)
-        values = info.context.session.exec(statement).all()
+        statement = select(models.Type)
+        values = info.context.session.execute(statement).scalars().all()
         return list(map(Type.from_model, values))
 
     @strawberry.field
     def routes(self, info: Info) -> list[Route]:
-        statement = select(RouteModel)
-        values = info.context.session.exec(statement).all()
+        statement = select(models.Route)
+        values = info.context.session.execute(statement).scalars().all()
         return list(map(Route.from_model, values))
 
     @strawberry.field
     def nodes(self, info: Info) -> list[Node]:
-        statement = select(NodeModel)
-        values = info.context.session.exec(statement).all()
+        statement = select(models.Node)
+        values = info.context.session.execute(statement).scalars().all()
         return list(map(Node.from_model, values))
 
     @strawberry.field
     def stops(self, info: Info) -> list[Stop]:
-        statement = select(StopModel)
-        values = info.context.session.exec(statement).all()
+        statement = select(models.Stop)
+        values = info.context.session.execute(statement).scalars().all()
         return list(map(Stop.from_model, values))
 
     @strawberry.field
     def route_stops(self, info: Info) -> list[RouteStop]:
-        statement = select(RouteStopModel)
-        values = info.context.session.exec(statement).all()
+        statement = select(models.RouteStop)
+        values = info.context.session.execute(statement).scalars().all()
         return list(map(RouteStop.from_model, values))
 
 
@@ -177,7 +173,7 @@ class Query:
 class Mutation:
     @strawberry.mutation
     def add_type(self, info: Info, name: str) -> Type:
-        model = TypeModel(name=name)
+        model = models.Type(name=name)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -193,11 +189,11 @@ class Mutation:
         type_name: str,
         stops: Optional[list[UUID]] = None,
     ) -> Route:
-        model = RouteModel(number=number, type_name=type_name)
+        model = models.Route(number=number, type_name=type_name)
         info.context.session.add(model)
         if stops:
             for i, stop_id in enumerate(stops):
-                route_stop = RouteStopModel(
+                route_stop = models.RouteStop(
                     distance=i * 100, route_id=model.id, stop_id=stop_id
                 )
                 info.context.session.add(route_stop)
@@ -215,13 +211,13 @@ class Mutation:
         name: str,
         stops: Optional[list[StopInput]] = None,
     ) -> Node:
-        model = NodeModel(name=name)
+        model = models.Node(name=name)
         info.context.session.add(model)
         if stops:
             for stop in stops:
                 point = shapely.geometry.point.Point(stop.lng, stop.lat)
                 location = geoalchemy2.shape.from_shape(point)
-                stop_model = StopModel(location=location, node_id=model.id)
+                stop_model = models.Stop(location=location, node_id=model.id)
                 info.context.session.add(stop_model)
         try:
             info.context.session.commit()
@@ -240,7 +236,7 @@ class Mutation:
     ) -> Stop:
         point = shapely.geometry.point.Point(lng, lat)
         location = geoalchemy2.shape.from_shape(point)
-        model = StopModel(location=location, node_id=node_id)
+        model = models.Stop(location=location, node_id=node_id)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -257,13 +253,13 @@ class Mutation:
         stop_id: UUID,
     ) -> RouteStop:
         statement = (
-            select(RouteStopModel)
-            .where(RouteStopModel.route_id == route_id)
-            .order_by(desc(RouteStopModel.distance))
+            select(models.RouteStop)
+            .where(models.RouteStop.route_id == route_id)
+            .order_by(desc(models.RouteStop.distance))
         )
-        last_stop = info.context.session.exec(statement).first()
+        last_stop = info.context.session.execute(statement).scalars().first()
         distance = last_stop.distance + 100 if last_stop else 0
-        model = RouteStopModel(route_id=route_id, stop_id=stop_id, distance=distance)
+        model = models.RouteStop(route_id=route_id, stop_id=stop_id, distance=distance)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -274,8 +270,8 @@ class Mutation:
 
     @strawberry.mutation
     def delete_unique(self, info: Info, uuid: UUID) -> None:
-        for ModelType in (RouteModel, NodeModel, StopModel):
-            if model := info.context.session.get(ModelType, uuid):
+        for ModelType in (models.Route, models.Node, models.Stop):  # type: ignore
+            if model := info.context.session.get(ModelType, uuid):  # type: ignore
                 info.context.session.delete(model)
                 try:
                     info.context.session.commit()

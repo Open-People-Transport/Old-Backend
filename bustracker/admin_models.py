@@ -2,7 +2,7 @@
 
 from sqladmin import ModelAdmin
 
-from .models import Node, Route, Stop, Type
+from bustracker.database.models import Node, Route, Stop, Type
 
 
 class TypeAdmin(ModelAdmin, model=Type):
