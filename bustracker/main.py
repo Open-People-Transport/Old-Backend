@@ -110,3 +110,8 @@ def read_stops(db: Session = Depends(get_session)):
 @app.get("/stops/{stop_id}", response_model=Stop, responses=GET_RESPONSES)
 def read_stop(stop_id: UUID, db: Session = Depends(get_session)):
     return StopService(db).get(stop_id)
+
+
+@app.get("/uuid")
+def get_random_uuid():
+    return uuid7()
