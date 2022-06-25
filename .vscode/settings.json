@@ -8,4 +8,7 @@
     "python.linting.banditEnabled": true,
     "python.linting.banditArgs": ["-s B101"],
     "editor.rulers": [88],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": ["tests"],
 }
