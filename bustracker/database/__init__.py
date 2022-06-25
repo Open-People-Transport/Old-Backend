@@ -23,3 +23,6 @@ def init_models():
 def get_session():
     with SessionLocal() as session:
         yield session
+
+
+from .models import Node, Route, RouteStop, Stop, Type

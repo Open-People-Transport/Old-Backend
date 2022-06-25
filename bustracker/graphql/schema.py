@@ -7,7 +7,7 @@ import geoalchemy2.shape
 import shapely.geometry.point
 import strawberry
 import strawberry.types
-from bustracker.database import models
+from bustracker import database as db
 from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
 from strawberry import Private, Schema
@@ -21,14 +21,14 @@ Info: TypeAlias = strawberry.types.Info[Context, Any]
 class Type:
     name: str
 
-    model: Private[models.Type]
+    model: Private[db.Type]
 
     @strawberry.field
     def routes(self) -> list[Route]:
         return list(map(Route.from_model, self.model.routes))
 
     @classmethod
-    def from_model(cls, model: models.Type):
+    def from_model(cls, model: db.Type):
         return cls(
             model=model,
             name=model.name,
@@ -40,7 +40,7 @@ class Route:
     id: UUID
     number: str
 
-    model: Private[models.Route]
+    model: Private[db.Route]
 
     @strawberry.field
     def type(self) -> Type:
@@ -51,7 +51,7 @@ class Route:
         return list(map(RouteStop.from_model, self.model.route_stops))
 
     @classmethod
-    def from_model(cls, model: models.Route):
+    def from_model(cls, model: db.Route):
         return cls(
             model=model,
             id=model.id,
@@ -64,14 +64,14 @@ class Node:
     id: UUID
     name: str
 
-    model: Private[models.Node]
+    model: Private[db.Node]
 
     @strawberry.field
     def stops(self) -> list[Stop]:
         return list(map(Stop.from_model, self.model.stops))
 
     @classmethod
-    def from_model(cls, model: models.Node):
+    def from_model(cls, model: db.Node):
         return cls(
             model=model,
             id=model.id,
@@ -85,7 +85,7 @@ class Stop:
     lat: float
     lng: float
 
-    model: Private[models.Stop]
+    model: Private[db.Stop]
 
     @strawberry.field
     def node(self) -> Node:
@@ -96,7 +96,7 @@ class Stop:
         return list(map(RouteStop.from_model, self.model.route_stops))
 
     @classmethod
-    def from_model(cls, model: models.Stop):
+    def from_model(cls, model: db.Stop):
         shape = geoalchemy2.shape.to_shape(model.location)
         if not isinstance(shape, shapely.geometry.point.Point):
             raise RuntimeError("Could not parse a Point from WKB")
@@ -118,7 +118,7 @@ class StopInput:
 class RouteStop:
     distance: int
 
-    model: Private[models.RouteStop]
+    model: Private[db.RouteStop]
 
     @strawberry.field
     def route(self) -> Route:
@@ -129,7 +129,7 @@ class RouteStop:
         return Stop.from_model(self.model.stop)
 
     @classmethod
-    def from_model(cls, model: models.RouteStop):
+    def from_model(cls, model: db.RouteStop):
         return cls(
             model=model,
             distance=model.distance,
@@ -140,31 +140,31 @@ class RouteStop:
 class Query:
     @strawberry.field
     def types(self, info: Info) -> list[Type]:
-        statement = select(models.Type)
+        statement = select(db.Type)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(Type.from_model, values))
 
     @strawberry.field
     def routes(self, info: Info) -> list[Route]:
-        statement = select(models.Route)
+        statement = select(db.Route)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(Route.from_model, values))
 
     @strawberry.field
     def nodes(self, info: Info) -> list[Node]:
-        statement = select(models.Node)
+        statement = select(db.Node)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(Node.from_model, values))
 
     @strawberry.field
     def stops(self, info: Info) -> list[Stop]:
-        statement = select(models.Stop)
+        statement = select(db.Stop)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(Stop.from_model, values))
 
     @strawberry.field
     def route_stops(self, info: Info) -> list[RouteStop]:
-        statement = select(models.RouteStop)
+        statement = select(db.RouteStop)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(RouteStop.from_model, values))
 
@@ -173,7 +173,7 @@ class Query:
 class Mutation:
     @strawberry.mutation
     def add_type(self, info: Info, name: str) -> Type:
-        model = models.Type(name=name)
+        model = db.Type(name=name)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -189,11 +189,11 @@ class Mutation:
         type_name: str,
         stops: Optional[list[UUID]] = None,
     ) -> Route:
-        model = models.Route(number=number, type_name=type_name)
+        model = db.Route(number=number, type_name=type_name)
         info.context.session.add(model)
         if stops:
             for i, stop_id in enumerate(stops):
-                route_stop = models.RouteStop(
+                route_stop = db.RouteStop(
                     distance=i * 100, route_id=model.id, stop_id=stop_id
                 )
                 info.context.session.add(route_stop)
@@ -211,13 +211,13 @@ class Mutation:
         name: str,
         stops: Optional[list[StopInput]] = None,
     ) -> Node:
-        model = models.Node(name=name)
+        model = db.Node(name=name)
         info.context.session.add(model)
         if stops:
             for stop in stops:
                 point = shapely.geometry.point.Point(stop.lng, stop.lat)
                 location = geoalchemy2.shape.from_shape(point)
-                stop_model = models.Stop(location=location, node_id=model.id)
+                stop_model = db.Stop(location=location, node_id=model.id)
                 info.context.session.add(stop_model)
         try:
             info.context.session.commit()
@@ -236,7 +236,7 @@ class Mutation:
     ) -> Stop:
         point = shapely.geometry.point.Point(lng, lat)
         location = geoalchemy2.shape.from_shape(point)
-        model = models.Stop(location=location, node_id=node_id)
+        model = db.Stop(location=location, node_id=node_id)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -253,13 +253,13 @@ class Mutation:
         stop_id: UUID,
     ) -> RouteStop:
         statement = (
-            select(models.RouteStop)
-            .where(models.RouteStop.route_id == route_id)
-            .order_by(desc(models.RouteStop.distance))
+            select(db.RouteStop)
+            .where(db.RouteStop.route_id == route_id)
+            .order_by(desc(db.RouteStop.distance))
         )
         last_stop = info.context.session.execute(statement).scalars().first()
         distance = last_stop.distance + 100 if last_stop else 0
-        model = models.RouteStop(route_id=route_id, stop_id=stop_id, distance=distance)
+        model = db.RouteStop(route_id=route_id, stop_id=stop_id, distance=distance)
         info.context.session.add(model)
         try:
             info.context.session.commit()
@@ -270,7 +270,7 @@ class Mutation:
 
     @strawberry.mutation
     def delete_unique(self, info: Info, uuid: UUID) -> None:
-        for ModelType in (models.Route, models.Node, models.Stop):  # type: ignore
+        for ModelType in (db.Route, db.Node, db.Stop):  # type: ignore
             if model := info.context.session.get(ModelType, uuid):  # type: ignore
                 info.context.session.delete(model)
                 try:
