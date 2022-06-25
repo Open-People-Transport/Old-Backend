@@ -1,7 +1,7 @@
 from uuid import UUID
 
 import geoalchemy2.shape
-import shapely
+import shapely.geometry.point
 from bustracker import api
 from bustracker import database as db
 from bustracker.api import ResourceNotFound
@@ -77,6 +77,27 @@ class RouteService(Service):
             raise ResourceNotFound(api.Route, id)
         return api.Route.from_orm(value)
 
+    def update(self, new: api.Route) -> api.Route:
+        row = self.db.get(db.Route, new.id)
+        if row is None:
+            row = db.Route(id=new.id)
+            self.db.add(row)
+        row.number = new.number
+        row.type_name = new.type_name
+        self.db.commit()
+        self.db.refresh(row)
+        return api.Route.from_orm(row)
+
+    def delete(self, id: UUID) -> None:
+        row = self.db.get(db.Route, id)
+        if not row:
+            raise ResourceNotFound(api.Route, id)
+        self.db.delete(row)
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise DatabaseConstraintsViolated(api.Route, id, detail=exc.orig)
+
 
 class NodeService(Service):
     def list(self) -> list[api.Node]:
@@ -91,6 +112,26 @@ class NodeService(Service):
             raise ResourceNotFound(api.Node, id)
         return api.Node.from_orm(value)
 
+    def update(self, new: api.Node) -> api.Node:
+        row = self.db.get(db.Node, new.id)
+        if row is None:
+            row = db.Node(id=new.id)
+            self.db.add(row)
+        row.name = new.name
+        self.db.commit()
+        self.db.refresh(row)
+        return api.Node.from_orm(row)
+
+    def delete(self, id: UUID) -> None:
+        row = self.db.get(db.Node, id)
+        if not row:
+            raise ResourceNotFound(api.Node, id)
+        self.db.delete(row)
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise DatabaseConstraintsViolated(api.Node, id, detail=exc.orig)
+
 
 class StopService(Service):
     def list(self) -> list[api.Stop]:
@@ -104,6 +145,28 @@ class StopService(Service):
         if value is None:
             raise ResourceNotFound(api.Stop, id)
         return self.model_to_schema(value)
+
+    def update(self, new: api.Stop) -> api.Stop:
+        row = self.db.get(db.Stop, new.id)
+        if row is None:
+            row = db.Stop(id=new.id)
+            self.db.add(row)
+        row.node_id = new.node_id
+        shape = shapely.geometry.point.Point(new.lon, new.lat)
+        row.location = geoalchemy2.shape.from_shape(shape)
+        self.db.commit()
+        self.db.refresh(row)
+        return api.Stop.from_orm(row)
+
+    def delete(self, id: UUID) -> None:
+        row = self.db.get(db.Stop, id)
+        if not row:
+            raise ResourceNotFound(api.Stop, id)
+        self.db.delete(row)
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise DatabaseConstraintsViolated(api.Stop, id, detail=exc.orig)
 
     @staticmethod
     def model_to_schema(model: db.Stop) -> api.Stop:

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqladmin import Admin
 from sqlalchemy.orm import Session
 from strawberry.fastapi import GraphQLRouter
+from uuid_extensions import uuid7
 
 from bustracker.admin_models import NodeAdmin  # type: ignore
 from bustracker.admin_models import RouteAdmin  # type: ignore
@@ -87,9 +88,19 @@ def read_routes(db: Session = Depends(get_session)):
     return RouteService(db).list()
 
 
+@app.put("/routes", response_model=Route)
+def create_or_update_route(route: Route, db: Session = Depends(get_session)):
+    return RouteService(db).update(route)
+
+
 @app.get("/routes/{route_id}", response_model=Route, responses=GET_RESPONSES)
 def read_route(route_id: UUID, db: Session = Depends(get_session)):
     return RouteService(db).get(route_id)
+
+
+@app.delete("/routes/{route_id}")
+def delete_route(route_id: UUID, db: Session = Depends(get_session)):
+    return RouteService(db).delete(route_id)
 
 
 @app.get("/nodes", response_model=list[Node])
@@ -97,9 +108,19 @@ def read_nodes(db: Session = Depends(get_session)):
     return NodeService(db).list()
 
 
+@app.put("/nodes", response_model=Node)
+def create_or_update_node(node: Node, db: Session = Depends(get_session)):
+    return NodeService(db).update(node)
+
+
 @app.get("/nodes/{node_id}", response_model=Node, responses=GET_RESPONSES)
 def read_node(node_id: UUID, db: Session = Depends(get_session)):
     return NodeService(db).get(node_id)
+
+
+@app.delete("/nodes/{node_id}")
+def delete_node(node_id: UUID, db: Session = Depends(get_session)):
+    return NodeService(db).delete(node_id)
 
 
 @app.get("/stops", response_model=list[Stop])
@@ -107,9 +128,19 @@ def read_stops(db: Session = Depends(get_session)):
     return StopService(db).list()
 
 
+@app.put("/stops", response_model=Stop)
+def create_or_update_stop(stop: Stop, db: Session = Depends(get_session)):
+    return StopService(db).update(stop)
+
+
 @app.get("/stops/{stop_id}", response_model=Stop, responses=GET_RESPONSES)
 def read_stop(stop_id: UUID, db: Session = Depends(get_session)):
     return StopService(db).get(stop_id)
+
+
+@app.delete("/stops/{stop_id}")
+def delete_stop(stop_id: UUID, db: Session = Depends(get_session)):
+    return StopService(db).delete(stop_id)
 
 
 @app.get("/uuid")
