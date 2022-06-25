@@ -11,14 +11,9 @@ from bustracker.admin_models import NodeAdmin  # type: ignore
 from bustracker.admin_models import RouteAdmin  # type: ignore
 from bustracker.admin_models import StopAdmin  # type: ignore
 from bustracker.admin_models import TypeAdmin  # type: ignore
+from bustracker.api.exceptions import ResourceException
 from bustracker.api.schemas import Node, Route, Stop, Type
-from bustracker.api.services import (
-    NodeService,
-    ResourceNotFound,
-    RouteService,
-    StopService,
-    TypeService,
-)
+from bustracker.api.services import NodeService, RouteService, StopService, TypeService
 from bustracker.database import engine, get_session
 
 from .graphql.context import get_context
@@ -36,19 +31,28 @@ admin.register_model(NodeAdmin)
 admin.register_model(StopAdmin)
 
 
-responses: dict[int | str, dict[str, Any]] = {
+GET_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Resource not found"},
+}
+
+POST_RESPONSES: dict[int | str, dict[str, Any]] = {}
+
+
+PUT_RESPONSES: dict[int | str, dict[str, Any]] = {
     404: {"description": "Resource not found"},
 }
 
 
-@app.exception_handler(ResourceNotFound)
-async def resource_not_found_handler(request: Request, exc: ResourceNotFound):
+# TODO Sort out exceptions
+@app.exception_handler(ResourceException)
+async def resource_exception_handler(request: Request, exc: ResourceException):
     return JSONResponse(
         status_code=404,
         content={
-            "detail": "Resource was not found",
+            "error": exc.__class__.__name__,
             "type": str(exc.type.__name__),
             "identifier": str(exc.identifier),
+            "detail": str(exc.detail),
         },
     )
 
@@ -58,9 +62,24 @@ def read_types(db: Session = Depends(get_session)):
     return TypeService(db).list()
 
 
-@app.get("/types/{type_name}", response_model=Type, responses=responses)
+@app.put("/types/", response_model=Type)
+def create_type(type: Type, db: Session = Depends(get_session)):
+    return TypeService(db).create(type)
+
+
+@app.get("/types/{type_name}", response_model=Type, responses=GET_RESPONSES)
 def read_type(type_name: str, db: Session = Depends(get_session)):
     return TypeService(db).get(type_name)
+
+
+@app.put("/types/{type_name}", response_model=Type)
+def update_type(type_name: str, type: Type, db: Session = Depends(get_session)):
+    return TypeService(db).update(type_name, type)
+
+
+@app.delete("/types/{type_name}")
+def delete_type(type_name: str, db: Session = Depends(get_session)):
+    return TypeService(db).delete(type_name)
 
 
 @app.get("/routes", response_model=list[Route])
@@ -68,7 +87,7 @@ def read_routes(db: Session = Depends(get_session)):
     return RouteService(db).list()
 
 
-@app.get("/routes/{route_id}", response_model=Route, responses=responses)
+@app.get("/routes/{route_id}", response_model=Route, responses=GET_RESPONSES)
 def read_route(route_id: UUID, db: Session = Depends(get_session)):
     return RouteService(db).get(route_id)
 
@@ -78,7 +97,7 @@ def read_nodes(db: Session = Depends(get_session)):
     return NodeService(db).list()
 
 
-@app.get("/nodes/{node_id}", response_model=Node, responses=responses)
+@app.get("/nodes/{node_id}", response_model=Node, responses=GET_RESPONSES)
 def read_node(node_id: UUID, db: Session = Depends(get_session)):
     return NodeService(db).get(node_id)
 
@@ -88,6 +107,6 @@ def read_stops(db: Session = Depends(get_session)):
     return StopService(db).list()
 
 
-@app.get("/stops/{stop_id}", response_model=Stop, responses=responses)
+@app.get("/stops/{stop_id}", response_model=Stop, responses=GET_RESPONSES)
 def read_stop(stop_id: UUID, db: Session = Depends(get_session)):
     return StopService(db).get(stop_id)

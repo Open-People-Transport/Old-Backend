@@ -5,7 +5,9 @@ import shapely
 from bustracker import api
 from bustracker import database as db
 from bustracker.api import ResourceNotFound
+from bustracker.api.exceptions import DatabaseConstraintsViolated, ResourceAlreadyExists
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 
@@ -26,6 +28,40 @@ class TypeService(Service):
         if value is None:
             raise ResourceNotFound(api.Type, name)
         return api.Type.from_orm(value)
+
+    def create(self, new: api.Type) -> api.Type:
+        if new in self:
+            raise ResourceAlreadyExists(api.Type, new.name)
+        row = db.Type(name=new.name)
+        self.db.add(row)
+        # No refresh needed
+        return api.Type.from_orm(row)
+
+    def update(self, name: str, new: api.Type) -> api.Type:
+        row = self.db.get(db.Type, name)
+        if row is None:
+            raise ResourceNotFound(api.Type, name)
+        row.name = new.name
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise DatabaseConstraintsViolated(api.Type, new.name, detail=exc.orig)
+        self.db.refresh(row)
+        return api.Type.from_orm(row)
+
+    def delete(self, name: str) -> None:
+        row = self.db.get(db.Type, name)
+        if row is None:
+            raise ResourceNotFound(api.Type, name)
+        self.db.delete(row)
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise DatabaseConstraintsViolated(api.Type, name, detail=exc.orig)
+
+    def __contains__(self, item: api.Type):
+        row = self.db.get(db.Type, item.name)
+        return row is not None
 
 
 class RouteService(Service):

@@ -1,15 +1,25 @@
 from __future__ import annotations
 
-from typing import Any, Type
+from dataclasses import dataclass
+from typing import Any, Optional, Type
 
 from bustracker import api
 
 
-class ResourceNotFound(Exception):
-    def __init__(
-        self,
-        type: Type[api.BaseModel],
-        identifier: Any,
-    ) -> None:
-        self.type = type
-        self.identifier = identifier
+@dataclass
+class ResourceException(Exception):
+    type: Type[api.BaseModel]
+    identifier: Any
+    detail: Optional[Any] = None
+
+
+class ResourceNotFound(ResourceException):
+    pass
+
+
+class ResourceAlreadyExists(ResourceException):
+    pass
+
+
+class DatabaseConstraintsViolated(ResourceException):
+    pass
