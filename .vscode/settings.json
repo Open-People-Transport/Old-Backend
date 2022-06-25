@@ -1,3 +1,11 @@
 {
-    "python.analysis.typeCheckingMode": "off"
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "off",
+    "python.formatting.provider": "black",
+    "python.sortImports.path": "isort",
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.banditEnabled": true,
+    "python.linting.banditArgs": ["-s B101"],
+    "editor.rulers": [88],
 }
