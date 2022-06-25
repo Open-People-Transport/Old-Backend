@@ -4,7 +4,7 @@ from bustracker.database import get_session
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/types", tags=["items"])
+router = APIRouter(prefix="/types", tags=["types"])
 
 
 @router.get("/", response_model=list[Type])
