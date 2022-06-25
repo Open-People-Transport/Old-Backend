@@ -1,19 +1,25 @@
-from fastapi import FastAPI
-from sqladmin import Admin
-from strawberry.fastapi import GraphQLRouter
+from typing import Any
 
-from .admin_models import NodeAdmin, RouteAdmin, StopAdmin, TypeAdmin  # type: ignore
-from .database import engine
+from fastapi import FastAPI
+from strawberry.fastapi import GraphQLRouter
+from uuid_extensions import uuid7
+
 from .graphql.context import get_context
 from .graphql.schema import schema
+from .routers import nodes, route_stops, routes, stops, types
 
 graphql_app = GraphQLRouter(schema, context_getter=get_context)
 
 app = FastAPI()
 app.include_router(graphql_app, prefix="/graphql")
 
-admin = Admin(app, engine)
-admin.register_model(TypeAdmin)
-admin.register_model(RouteAdmin)
-admin.register_model(NodeAdmin)
-admin.register_model(StopAdmin)
+app.include_router(types.router)
+app.include_router(routes.router)
+app.include_router(nodes.router)
+app.include_router(stops.router)
+app.include_router(route_stops.router)
+
+
+@app.get("/uuid")
+def get_random_uuid():
+    return uuid7()
