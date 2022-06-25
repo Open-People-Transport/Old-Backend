@@ -5,7 +5,7 @@ import shapely.geometry.point
 from bustracker import api
 from bustracker import database as db
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import asc, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
@@ -182,8 +182,12 @@ class StopService(Service):
 
 
 class RouteStopService(Service):
-    def list(self) -> list[api.RouteStop]:
+    def list(self, route_id: UUID = None, stop_id: UUID = None) -> list[api.RouteStop]:
         query = select(db.RouteStop)
+        if route_id:
+            query = query.where(db.RouteStop.route_id == route_id)
+        if stop_id:
+            query = query.where(db.RouteStop.stop_id == stop_id)
         values = self.db.scalars(query).all()
         result = list(map(api.RouteStop.from_orm, values))
         return result
@@ -193,3 +197,55 @@ class RouteStopService(Service):
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
         return api.RouteStop.from_orm(value)
+
+    def create(
+        self,
+        route_id: UUID,
+        stop_id: UUID,
+        after_stop: UUID = None,
+    ) -> api.RouteStop:
+        row = self.db.get(db.RouteStop, (stop_id, route_id))
+        if row is None:
+            row = db.RouteStop(stop_id=stop_id, route_id=route_id)
+            self.db.add(row)
+
+        # TODO Proper distance calculation algorithm
+        # Current solution:
+        # * If previous stop is not specified, assume the last one as the previous.
+        # * If a next stop after the previous one exists, insert the new stop
+        #   exactly in the middle (e.g. 200 + 500 -> 350).
+        # * If not, insert 200 meters ahead of the previous (e.g. 200 -> 400).
+        prev_stop: db.RouteStop | None
+        if after_stop:
+            prev_stop = self.db.get(db.RouteStop, (route_id, after_stop))
+            if prev_stop is None:
+                raise HTTPException(HTTP_404_NOT_FOUND)
+        else:
+            query = select(db.RouteStop).order_by(desc(db.RouteStop.distance))
+            prev_stop = self.db.scalars(query).first()
+        prev_distance = prev_stop.distance if prev_stop else -200
+        query = (
+            select(db.RouteStop)
+            .where(db.RouteStop.distance > prev_distance)
+            .order_by(asc(db.RouteStop.distance))
+        )
+        next_stop: db.RouteStop | None = self.db.scalars(query).first()
+        if next_stop:
+            current_distance = (prev_distance + next_stop.distance) // 2
+        else:
+            current_distance = prev_distance + 200
+
+        row.distance = current_distance
+        self.db.commit()
+        self.db.refresh(row)
+        return api.RouteStop.from_orm(row)
+
+    def delete(self, route_id: UUID, stop_id: UUID) -> None:
+        row = self.db.get(db.RouteStop, (route_id, stop_id))
+        if not row:
+            raise HTTPException(HTTP_404_NOT_FOUND)
+        self.db.delete(row)
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))

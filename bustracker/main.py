@@ -6,7 +6,7 @@ from uuid_extensions import uuid7
 
 from .graphql.context import get_context
 from .graphql.schema import schema
-from .routers import nodes, routes, stops, types
+from .routers import nodes, route_stops, routes, stops, types
 
 graphql_app = GraphQLRouter(schema, context_getter=get_context)
 
@@ -17,6 +17,7 @@ app.include_router(types.router)
 app.include_router(routes.router)
 app.include_router(nodes.router)
 app.include_router(stops.router)
+app.include_router(route_stops.router)
 
 
 @app.get("/uuid")
