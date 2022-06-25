@@ -14,16 +14,16 @@ def read_routes(db: Session = Depends(get_session)):
     return RouteService(db).list()
 
 
-@router.put("/", response_model=Route)
+@router.put("/", response_model=Route, responses={409: {}})
 def create_or_update_route(route: Route, db: Session = Depends(get_session)):
     return RouteService(db).update(route)
 
 
-@router.get("/{route_id}", response_model=Route)
+@router.get("/{route_id}", response_model=Route, responses={404: {}})
 def read_route(route_id: UUID, db: Session = Depends(get_session)):
     return RouteService(db).get(route_id)
 
 
-@router.delete("/{route_id}")
+@router.delete("/{route_id}", responses={409: {}})
 def delete_route(route_id: UUID, db: Session = Depends(get_session)):
     return RouteService(db).delete(route_id)
