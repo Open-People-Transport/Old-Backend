@@ -34,6 +34,7 @@ class TypeService(Service):
             raise HTTPException(HTTP_409_CONFLICT)
         row = db.Type(name=new.name)
         self.db.add(row)
+        self.db.commit()
         # No refresh needed
         return api.Type.from_orm(row)
 

@@ -1,3 +1,4 @@
+from random import randrange
 from uuid import UUID
 
 from fastapi.testclient import TestClient
@@ -141,5 +142,84 @@ def test_route_delete(client: TestClient):
     assert response.status_code == 200
     assert response.json() == None
     response = client.get("/routes/")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_node_create_with_id(client: TestClient):
+    id = str(uuid7())
+    data = {
+        "id": id,
+        "name": "Example St.",
+    }
+    response = client.put("/nodes/", json=data)
+    assert response.status_code == 200
+    assert response.json() == data
+
+
+def test_node_create_without_id(client: TestClient):
+    data = {
+        "name": "Example St.",
+    }
+    response = client.put("/nodes/", json=data)
+    assert response.status_code == 200
+    id = UUID(response.json()["id"])
+    assert response.json() == ({"id": str(id)} | data)
+
+
+def test_node_read(client: TestClient):
+    id = str(uuid7())
+    data = {
+        "id": id,
+        "name": "Example St.",
+    }
+    response = client.put("/nodes/", json=data)
+    response = client.get(f"/nodes/{id}")
+    assert response.status_code == 200
+    assert response.json() == data
+
+
+def test_node_read_all(client: TestClient):
+    id = str(uuid7())
+    data = {
+        "id": id,
+        "name": "Example St.",
+    }
+    response = client.put("/nodes/", json=data)
+    response = client.get("/nodes/")
+    assert response.status_code == 200
+    assert response.json() == [data]
+
+
+def test_node_update(client: TestClient):
+    id = str(uuid7())
+    data = {
+        "id": id,
+        "name": "Example St.",
+    }
+    response = client.put("/nodes/", json=data)
+    data = {
+        "id": id,
+        "name": "Example Ave.",
+    }
+    response = client.put("/nodes/", json=data)
+    assert response.status_code == 200
+    assert response.json() == data
+    response = client.get("/nodes/")
+    assert response.status_code == 200
+    assert response.json() == [data]
+
+
+def test_node_delete(client: TestClient):
+    id = str(uuid7())
+    data = {
+        "id": id,
+        "name": "Example Ave.",
+    }
+    response = client.put("/nodes/", json=data)
+    response = client.delete(f"/nodes/{id}")
+    assert response.status_code == 200
+    assert response.json() == None
+    response = client.get("/nodes/")
     assert response.status_code == 200
     assert response.json() == []
