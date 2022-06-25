@@ -49,6 +49,6 @@ class Stop(BaseModel):
 class RouteStop(BaseModel):
     route_id: UUID = Column(postgresql.UUID, ForeignKey(Route.id), primary_key=True)
     stop_id: UUID = Column(postgresql.UUID, ForeignKey(Stop.id), primary_key=True)
-    distance: int = Column(Integer, primary_key=True)
+    distance: int = Column(Integer, nullable=False)
     route: Route = relationship("Route", back_populates="route_stops")
     stop: Stop = relationship("Stop", back_populates="route_stops")
