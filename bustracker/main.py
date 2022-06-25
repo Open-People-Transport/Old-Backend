@@ -2,15 +2,9 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from sqladmin import Admin
 from strawberry.fastapi import GraphQLRouter
 from uuid_extensions import uuid7
 
-import bustracker
-from bustracker.admin_models import NodeAdmin  # type: ignore
-from bustracker.admin_models import RouteAdmin  # type: ignore
-from bustracker.admin_models import StopAdmin  # type: ignore
-from bustracker.admin_models import TypeAdmin  # type: ignore
 from bustracker.api.exceptions import ResourceException
 from bustracker.database import engine
 
@@ -22,12 +16,6 @@ graphql_app = GraphQLRouter(schema, context_getter=get_context)
 
 app = FastAPI()
 app.include_router(graphql_app, prefix="/graphql")
-
-admin = Admin(app, engine)
-admin.register_model(TypeAdmin)
-admin.register_model(RouteAdmin)
-admin.register_model(NodeAdmin)
-admin.register_model(StopAdmin)
 
 
 GET_RESPONSES: dict[int | str, dict[str, Any]] = {

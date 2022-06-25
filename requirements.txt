@@ -4,7 +4,6 @@ SQLAlchemy==1.4.37
 psycopg2==2.9.3
 alembic==1.8.0
 inflection==0.5.1
-sqladmin==0.1.10
 GeoAlchemy2==0.12.1
 strawberry-graphql==0.114.3
 Shapely==1.8.2
