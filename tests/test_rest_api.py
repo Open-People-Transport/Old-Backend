@@ -1,5 +1,5 @@
 import random
-from random import randrange
+from random import randint, randrange
 from string import ascii_letters, digits
 from uuid import UUID
 
@@ -7,8 +7,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from uuid_extensions import uuid7
-
-from tests import conftest
 
 
 def _type():
@@ -32,6 +30,15 @@ def _node():
     }
 
 
+def _stop(_node):
+    return {
+        "id": str(uuid7()),
+        "node_id": _node["id"],
+        "lat": randint(-90_0000000, 90_0000000) / 1_0000000,
+        "lon": randint(-180_0000000, 180_0000000) / 1_0000000,
+    }
+
+
 @pytest.fixture
 def type():
     return _type()
@@ -45,6 +52,11 @@ def route(type):
 @pytest.fixture
 def node():
     return _node()
+
+
+@pytest.fixture
+def stop(node):
+    return _stop(node)
 
 
 def test_database_connection(session: Session):
@@ -199,5 +211,63 @@ def test_node_delete(client: TestClient, node):
     assert response.status_code == 200
     assert response.json() == None
     response = client.get("/nodes/")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_stop_create_with_id(client: TestClient, node, stop):
+    response = client.put("/nodes/", json=node)
+    response = client.put("/stops/", json=stop)
+    assert response.status_code == 200
+    assert response.json() == stop
+
+
+def test_stop_create_without_id(client: TestClient, node, stop):
+    del stop["id"]
+    response = client.put("/nodes/", json=node)
+    response = client.put("/stops/", json=stop)
+    assert response.status_code == 200
+    stop["id"] = str(UUID(response.json()["id"]))
+    assert response.json() == stop
+
+
+def test_stop_read(client: TestClient, node, stop):
+    response = client.put("/nodes/", json=node)
+    response = client.put("/stops/", json=stop)
+    response = client.get("/stops/" + stop["id"])
+    assert response.status_code == 200
+    assert response.json() == stop
+
+
+def test_stop_read_all(client: TestClient, node, stop):
+    response = client.put("/nodes/", json=node)
+    response = client.put("/stops/", json=stop)
+    response = client.get("/stops/")
+    assert response.status_code == 200
+    assert response.json() == [stop]
+
+
+def test_stop_update(client: TestClient, node, stop):
+    node2 = _node()
+    stop2 = _stop(node2)
+    stop2["id"] = stop["id"]
+    response = client.put("/nodes/", json=node)
+    response = client.put("/nodes/", json=node2)
+    response = client.put("/stops/", json=stop)
+    response = client.put("/stops/", json=stop2)
+    assert response.status_code == 200
+    assert response.json() == stop2
+    response = client.get("/stops/")
+    assert response.status_code == 200
+    assert response.json() == [stop2]
+
+
+def test_stop_delete(client: TestClient, node, stop):
+    response = client.put("/nodes/", json=node)
+    response = client.put("/stops/", json=stop)
+    response = client.delete(f"/stops/" + stop["id"])
+    assert response.status_code == 200
+    assert response.json() == None
+    response = client.get("/stops/")
     assert response.status_code == 200
     assert response.json() == []
