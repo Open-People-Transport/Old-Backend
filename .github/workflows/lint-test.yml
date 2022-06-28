@@ -20,7 +20,7 @@ jobs:
     - name: Setup PostgreSQL with PostGIS
       uses: huaxk/postgis-action@v1.0.0
       with:
-        postgresql version: 14.4
+        postgresql version: 11
         postgresql db: bustracker_test
         postgresql user: bustracker1
         postgresql password: GnhkLL82
