@@ -34,6 +34,7 @@ class TypeService(Service):
             raise HTTPException(HTTP_409_CONFLICT)
         row = db.Type(name=new.name)
         self.db.add(row)
+        self.db.commit()
         # No refresh needed
         return api.Type.from_orm(row)
 
@@ -156,7 +157,7 @@ class StopService(Service):
         row.location = geoalchemy2.shape.from_shape(shape)
         self.db.commit()
         self.db.refresh(row)
-        return api.Stop.from_orm(row)
+        return self.model_to_schema(row)
 
     def delete(self, id: UUID) -> None:
         row = self.db.get(db.Stop, id)
