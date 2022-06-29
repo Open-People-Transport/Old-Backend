@@ -1,8 +1,9 @@
-from typing import Any
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from strawberry.fastapi import GraphQLRouter
 from uuid_extensions import uuid7
+
+from bustracker.core.exceptions import ResourceException
 
 from .graphql.context import get_context
 from .graphql.schema import schema
@@ -23,3 +24,8 @@ app.include_router(route_stops.router)
 @app.get("/uuid")
 def get_random_uuid():
     return uuid7()
+
+
+@app.exception_handler(ResourceException)
+async def resource_exception_handler(request: Request, exc: ResourceException):
+    return JSONResponse(status_code=exc.status_code, content=exc.asdict())

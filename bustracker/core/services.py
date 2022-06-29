@@ -4,11 +4,14 @@ import geoalchemy2.shape
 import shapely.geometry.point
 from bustracker import core
 from bustracker import database as db
-from fastapi import HTTPException
+from bustracker.core.exceptions import (
+    DatabaseIntegrityViolated,
+    ResourceAlreadyExists,
+    ResourceNotFound,
+)
 from sqlalchemy import asc, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
 
 
 class Service:
@@ -26,12 +29,12 @@ class TypeService(Service):
     def get(self, name: str) -> core.Type:
         value = self.session.get(db.Type, name)
         if value is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Type, name)
         return core.Type.from_orm(value)
 
     def create(self, new: core.Type) -> core.Type:
         if new in self:
-            raise HTTPException(HTTP_409_CONFLICT)
+            raise ResourceAlreadyExists(core.Type, new.name)
         row = db.Type(name=new.name)
         self.session.add(row)
         self.session.commit()
@@ -41,24 +44,24 @@ class TypeService(Service):
     def update(self, name: str, new: core.Type) -> core.Type:
         row = self.session.get(db.Type, name)
         if row is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Type, name)
         row.name = new.name
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
         self.session.refresh(row)
         return core.Type.from_orm(row)
 
     def delete(self, name: str) -> None:
         row = self.session.get(db.Type, name)
         if row is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Type, name)
         self.session.delete(row)
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
 
     def __contains__(self, item: core.Type):
         row = self.session.get(db.Type, item.name)
@@ -75,7 +78,7 @@ class RouteService(Service):
     def get(self, id: UUID) -> core.Route:
         value = self.session.get(db.Route, id)
         if value is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Route, id)
         return core.Route.from_orm(value)
 
     def update(self, new: core.Route) -> core.Route:
@@ -85,19 +88,22 @@ class RouteService(Service):
             self.session.add(row)
         row.number = new.number
         row.type_name = new.type_name
-        self.session.commit()
+        try:
+            self.session.commit()
+        except IntegrityError as exc:
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
         self.session.refresh(row)
         return core.Route.from_orm(row)
 
     def delete(self, id: UUID) -> None:
         row = self.session.get(db.Route, id)
         if not row:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Route, id)
         self.session.delete(row)
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Route, exc.args[0])
 
 
 class NodeService(Service):
@@ -110,7 +116,7 @@ class NodeService(Service):
     def get(self, id: UUID) -> core.Node:
         value = self.session.get(db.Node, id)
         if value is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Route, id)
         return core.Node.from_orm(value)
 
     def update(self, new: core.Node) -> core.Node:
@@ -126,12 +132,12 @@ class NodeService(Service):
     def delete(self, id: UUID) -> None:
         row = self.session.get(db.Node, id)
         if not row:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Route, id)
         self.session.delete(row)
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
 
 
 class StopService(Service):
@@ -144,7 +150,7 @@ class StopService(Service):
     def get(self, id: UUID) -> core.Stop:
         value = self.session.get(db.Stop, id)
         if value is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Stop, id)
         return self.model_to_schema(value)
 
     def update(self, new: core.Stop) -> core.Stop:
@@ -162,12 +168,12 @@ class StopService(Service):
     def delete(self, id: UUID) -> None:
         row = self.session.get(db.Stop, id)
         if not row:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.Stop, id)
         self.session.delete(row)
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
 
     @staticmethod
     def model_to_schema(model: db.Stop) -> core.Stop:
@@ -196,7 +202,7 @@ class RouteStopService(Service):
     def get(self, route_id: UUID, stop_id: UUID) -> core.RouteStop:
         value = self.session.get(db.RouteStop, (route_id, stop_id))
         if value is None:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.RouteStop, (route_id, stop_id))
         return core.RouteStop.from_orm(value)
 
     def create(
@@ -220,7 +226,7 @@ class RouteStopService(Service):
         if after_stop:
             prev_stop = self.session.get(db.RouteStop, (route_id, after_stop))
             if prev_stop is None:
-                raise HTTPException(HTTP_404_NOT_FOUND)
+                raise ResourceNotFound(core.Stop, after_stop)
         else:
             query = select(db.RouteStop).order_by(desc(db.RouteStop.distance))
             prev_stop = self.session.scalars(query).first()
@@ -244,9 +250,9 @@ class RouteStopService(Service):
     def delete(self, route_id: UUID, stop_id: UUID) -> None:
         row = self.session.get(db.RouteStop, (route_id, stop_id))
         if not row:
-            raise HTTPException(HTTP_404_NOT_FOUND)
+            raise ResourceNotFound(core.RouteStop, (route_id, stop_id))
         self.session.delete(row)
         try:
             self.session.commit()
         except IntegrityError as exc:
-            raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
+            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
