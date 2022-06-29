@@ -18,6 +18,12 @@ class Service:
     def __init__(self, session: Session) -> None:
         self.session = session
 
+    def _try_commit(self) -> None:
+        try:
+            self.session.commit()
+        except IntegrityError as exc:
+            raise DatabaseIntegrityViolated(core.Route, exc.args[0])
+
 
 class TypeService(Service):
     def list(self) -> list[core.Type]:
@@ -46,10 +52,7 @@ class TypeService(Service):
         if row is None:
             raise ResourceNotFound(core.Type, name)
         row.name = new.name
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
         self.session.refresh(row)
         return core.Type.from_orm(row)
 
@@ -58,12 +61,9 @@ class TypeService(Service):
         if row is None:
             raise ResourceNotFound(core.Type, name)
         self.session.delete(row)
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
 
-    def __contains__(self, item: core.Type):
+    def __contains__(self, item: core.Type) -> bool:
         row = self.session.get(db.Type, item.name)
         return row is not None
 
@@ -88,10 +88,7 @@ class RouteService(Service):
             self.session.add(row)
         row.number = new.number
         row.type_name = new.type_name
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
         self.session.refresh(row)
         return core.Route.from_orm(row)
 
@@ -100,10 +97,7 @@ class RouteService(Service):
         if not row:
             raise ResourceNotFound(core.Route, id)
         self.session.delete(row)
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Route, exc.args[0])
+        self._try_commit()
 
 
 class NodeService(Service):
@@ -134,10 +128,7 @@ class NodeService(Service):
         if not row:
             raise ResourceNotFound(core.Route, id)
         self.session.delete(row)
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
 
 
 class StopService(Service):
@@ -170,10 +161,7 @@ class StopService(Service):
         if not row:
             raise ResourceNotFound(core.Stop, id)
         self.session.delete(row)
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
 
     @staticmethod
     def model_to_schema(model: db.Stop) -> core.Stop:
@@ -252,7 +240,4 @@ class RouteStopService(Service):
         if not row:
             raise ResourceNotFound(core.RouteStop, (route_id, stop_id))
         self.session.delete(row)
-        try:
-            self.session.commit()
-        except IntegrityError as exc:
-            raise DatabaseIntegrityViolated(core.Type, exc.args[0])
+        self._try_commit()
