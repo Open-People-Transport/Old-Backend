@@ -2,7 +2,7 @@ from uuid import UUID
 
 import geoalchemy2.shape
 import shapely.geometry.point
-from bustracker import api
+from bustracker import core
 from bustracker import database as db
 from fastapi import HTTPException
 from sqlalchemy import asc, desc, select
@@ -17,28 +17,28 @@ class Service:
 
 
 class TypeService(Service):
-    def list(self) -> list[api.Type]:
+    def list(self) -> list[core.Type]:
         query = select(db.Type)
         values = self.db.scalars(query).all()
-        result = list(map(api.Type.from_orm, values))
+        result = list(map(core.Type.from_orm, values))
         return result
 
-    def get(self, name: str) -> api.Type:
+    def get(self, name: str) -> core.Type:
         value = self.db.get(db.Type, name)
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
-        return api.Type.from_orm(value)
+        return core.Type.from_orm(value)
 
-    def create(self, new: api.Type) -> api.Type:
+    def create(self, new: core.Type) -> core.Type:
         if new in self:
             raise HTTPException(HTTP_409_CONFLICT)
         row = db.Type(name=new.name)
         self.db.add(row)
         self.db.commit()
         # No refresh needed
-        return api.Type.from_orm(row)
+        return core.Type.from_orm(row)
 
-    def update(self, name: str, new: api.Type) -> api.Type:
+    def update(self, name: str, new: core.Type) -> core.Type:
         row = self.db.get(db.Type, name)
         if row is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
@@ -48,7 +48,7 @@ class TypeService(Service):
         except IntegrityError as exc:
             raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
         self.db.refresh(row)
-        return api.Type.from_orm(row)
+        return core.Type.from_orm(row)
 
     def delete(self, name: str) -> None:
         row = self.db.get(db.Type, name)
@@ -60,25 +60,25 @@ class TypeService(Service):
         except IntegrityError as exc:
             raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
 
-    def __contains__(self, item: api.Type):
+    def __contains__(self, item: core.Type):
         row = self.db.get(db.Type, item.name)
         return row is not None
 
 
 class RouteService(Service):
-    def list(self) -> list[api.Route]:
+    def list(self) -> list[core.Route]:
         query = select(db.Route)
         values = self.db.scalars(query).all()
-        result = list(map(api.Route.from_orm, values))
+        result = list(map(core.Route.from_orm, values))
         return result
 
-    def get(self, id: UUID) -> api.Route:
+    def get(self, id: UUID) -> core.Route:
         value = self.db.get(db.Route, id)
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
-        return api.Route.from_orm(value)
+        return core.Route.from_orm(value)
 
-    def update(self, new: api.Route) -> api.Route:
+    def update(self, new: core.Route) -> core.Route:
         row = self.db.get(db.Route, new.id)
         if row is None:
             row = db.Route(id=new.id)
@@ -87,7 +87,7 @@ class RouteService(Service):
         row.type_name = new.type_name
         self.db.commit()
         self.db.refresh(row)
-        return api.Route.from_orm(row)
+        return core.Route.from_orm(row)
 
     def delete(self, id: UUID) -> None:
         row = self.db.get(db.Route, id)
@@ -101,19 +101,19 @@ class RouteService(Service):
 
 
 class NodeService(Service):
-    def list(self) -> list[api.Node]:
+    def list(self) -> list[core.Node]:
         query = select(db.Node)
         values = self.db.scalars(query).all()
-        result = list(map(api.Node.from_orm, values))
+        result = list(map(core.Node.from_orm, values))
         return result
 
-    def get(self, id: UUID) -> api.Node:
+    def get(self, id: UUID) -> core.Node:
         value = self.db.get(db.Node, id)
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
-        return api.Node.from_orm(value)
+        return core.Node.from_orm(value)
 
-    def update(self, new: api.Node) -> api.Node:
+    def update(self, new: core.Node) -> core.Node:
         row = self.db.get(db.Node, new.id)
         if row is None:
             row = db.Node(id=new.id)
@@ -121,7 +121,7 @@ class NodeService(Service):
         row.name = new.name
         self.db.commit()
         self.db.refresh(row)
-        return api.Node.from_orm(row)
+        return core.Node.from_orm(row)
 
     def delete(self, id: UUID) -> None:
         row = self.db.get(db.Node, id)
@@ -135,19 +135,19 @@ class NodeService(Service):
 
 
 class StopService(Service):
-    def list(self) -> list[api.Stop]:
+    def list(self) -> list[core.Stop]:
         query = select(db.Stop)
         values = self.db.scalars(query).all()
         result = list(map(self.model_to_schema, values))
         return result
 
-    def get(self, id: UUID) -> api.Stop:
+    def get(self, id: UUID) -> core.Stop:
         value = self.db.get(db.Stop, id)
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
         return self.model_to_schema(value)
 
-    def update(self, new: api.Stop) -> api.Stop:
+    def update(self, new: core.Stop) -> core.Stop:
         row = self.db.get(db.Stop, new.id)
         if row is None:
             row = db.Stop(id=new.id)
@@ -170,11 +170,11 @@ class StopService(Service):
             raise HTTPException(HTTP_409_CONFLICT, str(exc.orig))
 
     @staticmethod
-    def model_to_schema(model: db.Stop) -> api.Stop:
+    def model_to_schema(model: db.Stop) -> core.Stop:
         shape = geoalchemy2.shape.to_shape(model.location)
         if not isinstance(shape, shapely.geometry.point.Point):
             raise RuntimeError("Could not parse a Point from WKB")
-        return api.Stop(
+        return core.Stop(
             id=model.id,
             lat=shape.y,
             lon=shape.x,
@@ -183,28 +183,28 @@ class StopService(Service):
 
 
 class RouteStopService(Service):
-    def list(self, route_id: UUID = None, stop_id: UUID = None) -> list[api.RouteStop]:
+    def list(self, route_id: UUID = None, stop_id: UUID = None) -> list[core.RouteStop]:
         query = select(db.RouteStop)
         if route_id:
             query = query.where(db.RouteStop.route_id == route_id)
         if stop_id:
             query = query.where(db.RouteStop.stop_id == stop_id)
         values = self.db.scalars(query).all()
-        result = list(map(api.RouteStop.from_orm, values))
+        result = list(map(core.RouteStop.from_orm, values))
         return result
 
-    def get(self, route_id: UUID, stop_id: UUID) -> api.RouteStop:
+    def get(self, route_id: UUID, stop_id: UUID) -> core.RouteStop:
         value = self.db.get(db.RouteStop, (route_id, stop_id))
         if value is None:
             raise HTTPException(HTTP_404_NOT_FOUND)
-        return api.RouteStop.from_orm(value)
+        return core.RouteStop.from_orm(value)
 
     def create(
         self,
         route_id: UUID,
         stop_id: UUID,
         after_stop: UUID = None,
-    ) -> api.RouteStop:
+    ) -> core.RouteStop:
         row = self.db.get(db.RouteStop, (stop_id, route_id))
         if row is None:
             row = db.RouteStop(stop_id=stop_id, route_id=route_id)
@@ -239,7 +239,7 @@ class RouteStopService(Service):
         row.distance = current_distance
         self.db.commit()
         self.db.refresh(row)
-        return api.RouteStop.from_orm(row)
+        return core.RouteStop.from_orm(row)
 
     def delete(self, route_id: UUID, stop_id: UUID) -> None:
         row = self.db.get(db.RouteStop, (route_id, stop_id))

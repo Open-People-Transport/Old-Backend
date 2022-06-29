@@ -1,4 +1,4 @@
-from .schemas import BaseModel, Node, Route, RouteStop, Stop, Type
+from .models import BaseModel, Node, Route, RouteStop, Stop, Type
 from .services import (
     NodeService,
     RouteService,

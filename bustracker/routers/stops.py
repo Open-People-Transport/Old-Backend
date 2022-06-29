@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from bustracker.api import Stop
-from bustracker.api.services import StopService
+from bustracker.core import Stop
+from bustracker.core.services import StopService
 from bustracker.database import get_session
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
