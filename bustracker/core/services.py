@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 import geoalchemy2.shape
@@ -177,7 +178,9 @@ class StopService(Service):
 
 
 class RouteStopService(Service):
-    def list(self, route_id: UUID = None, stop_id: UUID = None) -> list[core.RouteStop]:
+    def list(
+        self, route_id: Optional[UUID] = None, stop_id: Optional[UUID] = None
+    ) -> list[core.RouteStop]:
         query = select(db.RouteStop)
         if route_id:
             query = query.where(db.RouteStop.route_id == route_id)
@@ -197,7 +200,7 @@ class RouteStopService(Service):
         self,
         route_id: UUID,
         stop_id: UUID,
-        after_stop: UUID = None,
+        after_stop: Optional[UUID] = None,
     ) -> core.RouteStop:
         row = self.session.get(db.RouteStop, (stop_id, route_id))
         if row is None:

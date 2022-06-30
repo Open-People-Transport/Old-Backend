@@ -1,3 +1,7 @@
+# type: ignore
+# TODO Re-enable type checking when upgrading to SQLAlchemy 2,
+#      which aims to better support type hints.
+
 from __future__ import annotations
 
 import uuid
