@@ -36,17 +36,6 @@ def test_stop_route_read(client):
     assert response.status_code == 200 and response.json() == data
 
 
-def test_all_route_stops_listed(client):
-    response = client.get(f"/route_stops/")
-    assert response.status_code == 200 and response.json() == []
-    data1 = test_route_stop_created(client)
-    response = client.get(f"/route_stops/")
-    assert response.status_code == 200 and response.json() == [data1]
-    data2 = test_route_stop_created(client)
-    response = client.get(f"/route_stops/")
-    assert response.status_code == 200 and response.json() == [data1, data2]
-
-
 def test_route_stops_listed(client):
     route = test_route_created(client)
     stop1 = test_stop_created(client)
