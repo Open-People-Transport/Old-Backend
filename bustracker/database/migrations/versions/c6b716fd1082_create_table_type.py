@@ -1,17 +1,16 @@
 """Create table Type
 
 Revision ID: c6b716fd1082
-Revises: 
+Revises:
 Create Date: 2022-06-21 14:03:25.631844
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'c6b716fd1082'
-down_revision = None
+down_revision = 'c62ab13a7632'
 branch_labels = None
 depends_on = None
 

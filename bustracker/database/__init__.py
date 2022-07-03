@@ -9,6 +9,10 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 @as_declarative()
 class BaseModel:
+    def __init__(self, *args, **kwargs) -> None:
+        # TODO Remove when upgrading to SQLAlchemy 2
+        super().__init__(*args, **kwargs)
+
     @classmethod
     @declared_attr
     def __tablename__(cls) -> str:
@@ -23,6 +27,3 @@ def init_models():
 def get_session():
     with SessionLocal() as session:
         yield session
-
-
-from .models import Node, Route, RouteStop, Stop, Type

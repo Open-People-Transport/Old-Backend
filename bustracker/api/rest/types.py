@@ -1,6 +1,6 @@
-from bustracker.api import Type
-from bustracker.api.services import TypeService
+from bustracker.core.models import Type
 from bustracker.database import get_session
+from bustracker.services.services import TypeService
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

@@ -7,7 +7,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "bustracker.main:app",
+                "bustracker.api:app",
                 "--reload"
             ],
             "jinja": true,
