@@ -27,8 +27,3 @@ def init_models():
 def get_session():
     with SessionLocal() as session:
         yield session
-
-
-from .models import Node, Route, RouteStop, Stop, Type  # type: ignore
-
-# TODO Re-enable type checking when upgrading to SQLAlchemy 2

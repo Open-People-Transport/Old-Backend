@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from bustracker.core import Node
-from bustracker.core.services import NodeService
+from bustracker.core.models import Node
 from bustracker.database import get_session
+from bustracker.services.services import NodeService
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

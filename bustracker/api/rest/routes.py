@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from bustracker.core import Route, RouteStop
-from bustracker.core.services import RouteService, RouteStopService
+from bustracker.core.models import Route, RouteStop
 from bustracker.database import get_session
+from bustracker.services.services import RouteService, RouteStopService
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
