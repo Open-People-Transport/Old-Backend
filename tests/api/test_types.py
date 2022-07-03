@@ -10,32 +10,32 @@ def mock_type():
     }
 
 
-def test_type_created(client):
+def test_create_type(client):
     data = mock_type()
     response = client.put(URL, json=data)
     assert response.status_code == 200 and response.json() == data
     return data
 
 
-def test_type_read(client):
-    data = test_type_created(client)
+def test_read_type(client):
+    data = test_create_type(client)
     response = client.get(URL + data["name"])
     assert response.status_code == 200 and response.json() == data
 
 
-def test_types_listed(client):
+def test_read_types(client):
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == []
-    data1 = test_type_created(client)
+    data1 = test_create_type(client)
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == [data1]
-    data2 = test_type_created(client)
+    data2 = test_create_type(client)
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == [data1, data2]
 
 
-def test_type_updated(client):
-    data1 = test_type_created(client)
+def test_update_type(client):
+    data1 = test_create_type(client)
     data2 = mock_type()
     response = client.put(URL + data1["name"], json=data2)
     assert response.status_code == 200 and response.json() == data2
@@ -43,8 +43,8 @@ def test_type_updated(client):
     assert response.status_code == 200 and response.json() == [data2]
 
 
-def test_type_deleted(client):
-    data = test_type_created(client)
+def test_delete_type(client):
+    data = test_create_type(client)
     response = client.delete(URL + data["name"])
     assert response.status_code == 200 and response.json() == None
     response = client.get(URL)

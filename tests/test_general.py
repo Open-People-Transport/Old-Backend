@@ -1,6 +1,6 @@
-def test_database_session_available(session):
+def test_init_database_session(session):
     pass
 
 
-def test_client_available(client):
+def test_init_client(client):
     pass
