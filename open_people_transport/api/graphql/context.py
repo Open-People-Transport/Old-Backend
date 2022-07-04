@@ -1,5 +1,5 @@
-from bustracker.database import get_session
 from fastapi import Depends
+from open_people_transport.database import get_session
 from sqlalchemy.orm import Session
 from strawberry.fastapi import BaseContext
 

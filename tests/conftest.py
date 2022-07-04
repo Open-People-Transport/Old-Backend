@@ -1,6 +1,6 @@
 import pytest
-from bustracker.api import app
-from bustracker.database import BaseModel, get_session, init_models
+from open_people_transport.api import app
+from open_people_transport.database import BaseModel, get_session, init_models
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

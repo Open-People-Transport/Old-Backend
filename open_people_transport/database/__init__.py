@@ -1,4 +1,4 @@
-from bustracker.settings import get_settings
+from open_people_transport.settings import get_settings
 from inflection import underscore
 from sqlalchemy import create_engine
 from sqlalchemy.orm import as_declarative, declared_attr, sessionmaker

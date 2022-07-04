@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from bustracker.core.models import Node
-from bustracker.database import get_session
-from bustracker.services.services import NodeService
+from open_people_transport.core.models import Node
+from open_people_transport.database import get_session
+from open_people_transport.services.services import NodeService
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 

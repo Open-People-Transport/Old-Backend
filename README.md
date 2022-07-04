@@ -1,4 +1,4 @@
-# Bustracker FastAPI backend
+# Open People Transport Backend Server
 
 ## License
 

@@ -1,8 +1,8 @@
 from logging.config import fileConfig
 
 from alembic import context
-from bustracker.database import BaseModel, engine, init_models
-from bustracker.settings import get_settings
+from open_people_transport.database import BaseModel, engine, init_models
+from open_people_transport.settings import get_settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

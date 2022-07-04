@@ -1,7 +1,7 @@
-from bustracker.api.graphql.context import get_context
-from bustracker.api.graphql.schema import schema
-from bustracker.api.rest import nodes, routes, stops, types
-from bustracker.services.exceptions import ResourceException
+from open_people_transport.api.graphql.context import get_context
+from open_people_transport.api.graphql.schema import schema
+from open_people_transport.api.rest import nodes, routes, stops, types
+from open_people_transport.services.exceptions import ResourceException
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from strawberry.fastapi import GraphQLRouter
