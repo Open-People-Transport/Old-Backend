@@ -6,8 +6,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 TESTING_DB_URL = "postgresql://bustracker1:GnhkLL82@localhost:5432/bustracker_test"
-engine = create_engine(TESTING_DB_URL)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(TESTING_DB_URL, future=True)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine, future=True
+)
 
 
 @pytest.fixture()
