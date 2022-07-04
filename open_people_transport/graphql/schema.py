@@ -7,11 +7,11 @@ import geoalchemy2.shape
 import shapely.geometry.point
 import strawberry
 import strawberry.types
-from bustracker.database.models import Node as SQLNode
-from bustracker.database.models import Route as SQLRoute
-from bustracker.database.models import RouteStop as SQLRouteStop
-from bustracker.database.models import Stop as SQLStop
-from bustracker.database.models import Type as SQLType
+from open_people_transport.database.models import Node as SQLNode
+from open_people_transport.database.models import Route as SQLRoute
+from open_people_transport.database.models import RouteStop as SQLRouteStop
+from open_people_transport.database.models import Stop as SQLStop
+from open_people_transport.database.models import Type as SQLType
 from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
 from strawberry import Private, Schema

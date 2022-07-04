@@ -1,7 +1,7 @@
-from bustracker.core.models import Type
-from bustracker.database import get_session
-from bustracker.services.services import TypeService
 from fastapi import APIRouter, Depends
+from open_people_transport.core.models import Type
+from open_people_transport.crud.services import TypeService
+from open_people_transport.database import get_session
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/types", tags=["types"])

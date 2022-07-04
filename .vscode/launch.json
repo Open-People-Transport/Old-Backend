@@ -7,7 +7,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "bustracker.api:app",
+                "open_people_transport.main:app",
                 "--reload"
             ],
             "jinja": true,

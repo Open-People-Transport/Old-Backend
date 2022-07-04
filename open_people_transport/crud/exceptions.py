@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, ClassVar, Type
 
-from bustracker.core.models import BaseModel
+from open_people_transport.core.models import BaseModel
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
 
 

@@ -3,16 +3,16 @@ from uuid import UUID
 
 import geoalchemy2.shape
 import shapely.geometry.point
-from bustracker.core.models import Node as CoreNode
-from bustracker.core.models import Route as CoreRoute
-from bustracker.core.models import RouteStop as CoreRouteStop
-from bustracker.core.models import Stop as CoreStop
-from bustracker.core.models import Type as CoreType
-from bustracker.database.models import Node as SQLNode
-from bustracker.database.models import Route as SQLRoute
-from bustracker.database.models import RouteStop as SQLRouteStop
-from bustracker.database.models import Stop as SQLStop
-from bustracker.database.models import Type as SQLType
+from open_people_transport.core.models import Node as CoreNode
+from open_people_transport.core.models import Route as CoreRoute
+from open_people_transport.core.models import RouteStop as CoreRouteStop
+from open_people_transport.core.models import Stop as CoreStop
+from open_people_transport.core.models import Type as CoreType
+from open_people_transport.database.models import Node as SQLNode
+from open_people_transport.database.models import Route as SQLRoute
+from open_people_transport.database.models import RouteStop as SQLRouteStop
+from open_people_transport.database.models import Stop as SQLStop
+from open_people_transport.database.models import Type as SQLType
 from sqlalchemy import asc, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
