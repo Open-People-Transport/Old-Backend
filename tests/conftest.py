@@ -1,7 +1,7 @@
 import pytest
+from fastapi.testclient import TestClient
 from open_people_transport.api import app
 from open_people_transport.database import BaseModel, get_session, init_models
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
