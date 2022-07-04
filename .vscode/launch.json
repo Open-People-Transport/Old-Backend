@@ -7,7 +7,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "open_people_transport.api:app",
+                "open_people_transport.main:app",
                 "--reload"
             ],
             "jinja": true,
