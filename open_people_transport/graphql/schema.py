@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from shutil import ExecError
 from typing import Any, Optional, TypeAlias
 from uuid import UUID
 
@@ -171,6 +172,34 @@ class Query:
         statement = select(SQLRouteStop)
         values = info.context.session.execute(statement).scalars().all()
         return list(map(RouteStop.from_model, values))
+
+    @strawberry.field
+    def type(self, name: str, info: Info) -> Type:
+        value = info.context.session.get(SQLType, name)
+        if value is None:
+            raise ValueError(f"Type '{name}' not found")
+        return Type.from_model(value)
+
+    @strawberry.field
+    def route(self, id: UUID, info: Info) -> Route:
+        value = info.context.session.get(SQLRoute, id)
+        if value is None:
+            raise ValueError(f"Route '{id}' not found")
+        return Route.from_model(value)
+
+    @strawberry.field
+    def node(self, id: UUID, info: Info) -> Node:
+        value = info.context.session.get(SQLNode, id)
+        if value is None:
+            raise ValueError(f"Node '{id}' not found")
+        return Node.from_model(value)
+
+    @strawberry.field
+    def stop(self, id: UUID, info: Info) -> Stop:
+        value = info.context.session.get(SQLStop, id)
+        if value is None:
+            raise ValueError(f"Stop '{id}' not found")
+        return Stop.from_model(value)
 
 
 @strawberry.type
