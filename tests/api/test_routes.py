@@ -65,6 +65,6 @@ def test_update_route(client):
 def test_delete_route(client):
     data = test_create_route(client)
     response = client.delete(URL + data["id"])
-    assert response.status_code == 200 and response.json() == None
+    assert response.status_code == 200 and response.json() is None
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == []
