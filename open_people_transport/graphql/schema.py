@@ -24,7 +24,7 @@ Info: TypeAlias = strawberry.types.Info[Context, Any]
 
 @strawberry.type
 class Type:
-    name: str
+    id: str
 
     model: Private[SQLType]
 
@@ -36,7 +36,7 @@ class Type:
     def from_model(cls, model: SQLType):
         return cls(
             model=model,
-            name=model.name,
+            id=model.id,
         )
 
 
@@ -174,10 +174,10 @@ class Query:
         return list(map(RouteStop.from_model, values))
 
     @strawberry.field
-    def type(self, name: str, info: Info) -> Type:
-        value = info.context.session.get(SQLType, name)
+    def type(self, id: str, info: Info) -> Type:
+        value = info.context.session.get(SQLType, id)
         if value is None:
-            raise ValueError(f"Type '{name}' not found")
+            raise ValueError(f"Type '{id}' not found")
         return Type.from_model(value)
 
     @strawberry.field
@@ -205,13 +205,13 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    def add_type(self, info: Info, name: str) -> Type:
-        model = SQLType(name=name)
+    def add_type(self, info: Info, id: str) -> Type:
+        model = SQLType(id=id)
         info.context.session.add(model)
         try:
             info.context.session.commit()
         except IntegrityError:
-            raise RuntimeError("Type with this name already exists")
+            raise RuntimeError("Type with this id already exists")
         return Type.from_model(model)
 
     @strawberry.mutation
@@ -219,10 +219,10 @@ class Mutation:
         self,
         info: Info,
         number: str,
-        type_name: str,
+        type_id: str,
         stops: Optional[list[UUID]] = None,
     ) -> Route:
-        model = SQLRoute(number=number, type_name=type_name)
+        model = SQLRoute(number=number, type_id=type_id)
         info.context.session.add(model)
         if stops:
             for i, stop_id in enumerate(stops):

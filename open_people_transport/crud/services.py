@@ -42,39 +42,39 @@ class TypeService(Service):
         result = list(map(CoreType.from_orm, values))
         return result
 
-    def get(self, name: str) -> CoreType:
-        value = self.session.get(SQLType, name)
+    def get(self, id: str) -> CoreType:
+        value = self.session.get(SQLType, id)
         if value is None:
-            raise ResourceNotFound(CoreType, name)
+            raise ResourceNotFound(CoreType, id)
         return CoreType.from_orm(value)
 
     def create(self, new: CoreType) -> CoreType:
         if new in self:
-            raise ResourceAlreadyExists(CoreType, new.name)
-        row = SQLType(name=new.name)
+            raise ResourceAlreadyExists(CoreType, new.id)
+        row = SQLType(id=new.id)
         self.session.add(row)
         self.session.commit()
         # No refresh needed
         return CoreType.from_orm(row)
 
-    def update(self, name: str, new: CoreType) -> CoreType:
-        row = self.session.get(SQLType, name)
+    def update(self, id: str, new: CoreType) -> CoreType:
+        row = self.session.get(SQLType, id)
         if row is None:
-            raise ResourceNotFound(CoreType, name)
-        row.name = new.name
+            raise ResourceNotFound(CoreType, id)
+        row.id = new.id
         self._try_commit()
         self.session.refresh(row)
         return CoreType.from_orm(row)
 
-    def delete(self, name: str) -> None:
-        row = self.session.get(SQLType, name)
+    def delete(self, id: str) -> None:
+        row = self.session.get(SQLType, id)
         if row is None:
-            raise ResourceNotFound(CoreType, name)
+            raise ResourceNotFound(CoreType, id)
         self.session.delete(row)
         self._try_commit()
 
     def __contains__(self, item: CoreType) -> bool:
-        row = self.session.get(SQLType, item.name)
+        row = self.session.get(SQLType, item.id)
         return row is not None
 
 
@@ -97,7 +97,7 @@ class RouteService(Service):
             row = SQLRoute(id=new.id)
             self.session.add(row)
         row.number = new.number
-        row.type_name = new.type_name
+        row.type_id = new.type_id
         self._try_commit()
         self.session.refresh(row)
         return CoreRoute.from_orm(row)

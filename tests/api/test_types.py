@@ -6,7 +6,7 @@ URL = "/types/"
 
 def mock_type():
     return {
-        "name": "".join(random.choice(ascii_letters) for _ in range(12)),
+        "id": "".join(random.choice(ascii_letters) for _ in range(12)),
     }
 
 
@@ -19,7 +19,7 @@ def test_create_type(client):
 
 def test_read_type(client):
     data = test_create_type(client)
-    response = client.get(URL + data["name"])
+    response = client.get(URL + data["id"])
     assert response.status_code == 200 and response.json() == data
 
 
@@ -37,7 +37,7 @@ def test_read_types(client):
 def test_update_type(client):
     data1 = test_create_type(client)
     data2 = mock_type()
-    response = client.put(URL + data1["name"], json=data2)
+    response = client.put(URL + data1["id"], json=data2)
     assert response.status_code == 200 and response.json() == data2
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == [data2]
@@ -45,7 +45,7 @@ def test_update_type(client):
 
 def test_delete_type(client):
     data = test_create_type(client)
-    response = client.delete(URL + data["name"])
+    response = client.delete(URL + data["id"])
     assert response.status_code == 200 and response.json() == None
     response = client.get(URL)
     assert response.status_code == 200 and response.json() == []

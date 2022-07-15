@@ -17,16 +17,16 @@ def create_type(type: Type, db: Session = Depends(get_session)):
     return TypeService(db).create(type)
 
 
-@router.get("/{type_name}", response_model=Type, responses={404: {}})
-def read_type(type_name: str, db: Session = Depends(get_session)):
-    return TypeService(db).get(type_name)
+@router.get("/{type_id}", response_model=Type, responses={404: {}})
+def read_type(type_id: str, db: Session = Depends(get_session)):
+    return TypeService(db).get(type_id)
 
 
-@router.put("/{type_name}", response_model=Type, responses={409: {}})
-def update_type(type_name: str, type: Type, db: Session = Depends(get_session)):
-    return TypeService(db).update(type_name, type)
+@router.put("/{type_id}", response_model=Type, responses={409: {}})
+def update_type(type_id: str, type: Type, db: Session = Depends(get_session)):
+    return TypeService(db).update(type_id, type)
 
 
-@router.delete("/{type_name}", responses={409: {}})
-def delete_type(type_name: str, db: Session = Depends(get_session)):
-    return TypeService(db).delete(type_name)
+@router.delete("/{type_id}", responses={409: {}})
+def delete_type(type_id: str, db: Session = Depends(get_session)):
+    return TypeService(db).delete(type_id)

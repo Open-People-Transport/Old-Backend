@@ -16,14 +16,14 @@ UUID: TypeAlias = postgresql.UUID | uuid.UUID
 
 
 class Type(BaseModel):
-    name: str = Column(String(12), primary_key=True)  # type: ignore
+    id: str = Column(String(12), primary_key=True)  # type: ignore
     routes: list[Route] = relationship("Route", back_populates="type")  # type: ignore
 
 
 class Route(BaseModel):
     id: UUID = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid7)  # type: ignore
     number: str = Column(String(6), nullable=False)  # type: ignore
-    type_name: str = Column(String(12), ForeignKey(Type.name), nullable=False)  # type: ignore
+    type_id: str = Column(String(12), ForeignKey(Type.id), nullable=False)  # type: ignore
     type: Type = relationship("Type", back_populates="routes")  # type: ignore
     route_stops: list[RouteStop] = relationship("RouteStop", back_populates="route")  # type: ignore
 

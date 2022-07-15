@@ -18,7 +18,7 @@ class Type(BaseModel):
     A type of public transportation (e.g. bus, train, etc.).
     """
 
-    name: str = Field(max_length=12, example="bus")
+    id: str = Field(max_length=12, example="bus")
 
 
 class Route(BaseModel):
@@ -29,7 +29,7 @@ class Route(BaseModel):
 
     id: UUID = Field(default_factory=uuid7)
     number: str = Field(max_length=6, example="1")
-    type_name: str = Field(max_length=12, example="bus")
+    type_id: str = Field(max_length=12, example="bus")
 
 
 class Node(BaseModel):

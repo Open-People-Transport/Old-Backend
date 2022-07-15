@@ -13,7 +13,7 @@ def mock_route(type, id=None):
     return {
         "id": id or str(uuid7()),
         "number": "".join(random.choice(digits) for _ in range(6)),
-        "type_name": type["name"],
+        "type_id": type["id"],
     }
 
 
